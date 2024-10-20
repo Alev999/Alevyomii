@@ -1066,9 +1066,19 @@ func handleGetMethod(w http.ResponseWriter, req *http.Request) {
 			newHeader[key] = value
 		}
 	}
-	if urlStr == "" && quarkFids != "" {
+	if urlStr == "" && (quarkFids != "" || ucFids != "") {
+		var apiUrl string
+		var fid string
+		if quarkFids != "" {
+			apiUrl = "https://drive-pc.quark.cn/1/clouddrive/file/download?pr=ucpro&fr=pc&uc_param_str="
+			fid = quarkFids
+		} else {
+			apiUrl = "https://pc-api.uc.cn/1/clouddrive/file/download?pr=UCBrowser&fr=pc&uc_param_str="
+			fid = ucFids
+		}
+
 		data := map[string]interface{}{
-			"fids": []string{quarkFids},
+			"fids": []string{fid},
 		}
 		var apiResponse struct {
 			Data []struct {
@@ -1080,50 +1090,22 @@ func handleGetMethod(w http.ResponseWriter, req *http.Request) {
 			R().
 			SetHeaderMultiValues(newHeader).
 			SetBody(data).
-			Post("https://drive-pc.quark.cn/1/clouddrive/file/download?pr=ucpro&fr=pc&uc_param_str=")
+			Post(apiUrl)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to download %v link: %v", urlStr, err), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("Get download link failed: %v", err), http.StatusInternalServerError)
+			log.Printf("[Error] Get download link failed: %v", err)
 			return
 		}
 		err = json.Unmarshal(resp.Body(), &apiResponse)
 		if err != nil {
-			http.Error(w, "Failed to parse API response", http.StatusInternalServerError)
+			http.Error(w, "Parse API response failed", http.StatusInternalServerError)
+			log.Printf("[Error] Parse API response failed: %v", err)
 			return
 		}
 
 		if len(apiResponse.Data) == 0 {
-			http.Error(w, "No download URL found", http.StatusNotFound)
-			return
-		}
-		urlStr = apiResponse.Data[0].DownloadUrl
-	}
-	if urlStr == "" && ucFids != "" {
-		data := map[string]interface{}{
-			"fids": []string{ucFids},
-		}
-		var apiResponse struct {
-			Data []struct {
-				DownloadUrl string `json:"download_url"`
-			} `json:"data"`
-		}
-		resp, err := RestyClient.
-			SetRetryCount(3).
-			R().
-			SetHeaderMultiValues(newHeader).
-			SetBody(data).
-			Post("https://pc-api.uc.cn/1/clouddrive/file/download?pr=UCBrowser&fr=pc&uc_param_str=")
-		if err != nil {
-			http.Error(w, fmt.Sprintf("Failed to download %v link: %v", urlStr, err), http.StatusInternalServerError)
-			return
-		}
-		err = json.Unmarshal(resp.Body(), &apiResponse)
-		if err != nil {
-			http.Error(w, "Failed to parse API response", http.StatusInternalServerError)
-			return
-		}
-
-		if len(apiResponse.Data) == 0 {
-			http.Error(w, "No download URL found", http.StatusNotFound)
+			http.Error(w, "No download link found", http.StatusNotFound)
+			log.Printf("[Error] No download link found")
 			return
 		}
 		urlStr = apiResponse.Data[0].DownloadUrl
