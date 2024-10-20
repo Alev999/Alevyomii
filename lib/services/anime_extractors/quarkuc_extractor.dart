@@ -420,7 +420,7 @@ class QuarkUcExtractor {
           headers.remove('Content-Type');
           final baseUrl = MTorrentServer().getBaseUrl();
           String url =
-              "$baseUrl/?thread=8&url=&quarkfids=${saveFileIdCaches[fileId]}&header=$headers";
+              "$baseUrl/?thread=8&url=&ucfids=${saveFileIdCaches[fileId]}&header=$headers";
           videos.add(Video(url, "原画Go", url));
         }
       }
