@@ -55,7 +55,7 @@ func Start(config *Config) (int, error) {
 	if isWorkPool == nil {
 		isWorkPool = new(bool)
 	}
-	*isWorkPool = true
+	*isWorkPool = false
 
 	torrentcliCfg = torrent.NewDefaultClientConfig()
 
@@ -1109,6 +1109,7 @@ func handleGetMethod(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 		urlStr = apiResponse.Data[0].DownloadUrl
+		log.Printf("[Debug] urlStr: %v", urlStr)
 	}
 	if urlStr != "" {
 		if strForm == "base64" {
@@ -1125,7 +1126,7 @@ func handleGetMethod(w http.ResponseWriter, req *http.Request) {
 	}
 
 	for parameterName := range query {
-		if parameterName == "url" || parameterName == "form" || parameterName == "thread" || parameterName == "size" || parameterName == "header" || parameterName == "quarkfids" {
+		if parameterName == "url" || parameterName == "form" || parameterName == "thread" || parameterName == "size" || parameterName == "header" || parameterName == "quarkfids" || parameterName == "ucfids" {
 			continue
 		}
 		urlStr = urlStr + "&" + parameterName + "=" + query.Get(parameterName)
@@ -1174,10 +1175,12 @@ func handleGetMethod(w http.ResponseWriter, req *http.Request) {
 			Get(urlStr)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Failed to download %v link: %v", urlStr, err), http.StatusInternalServerError)
+			log.Printf("[Error] Failed to download %v link: %v", urlStr, err)
 			return
 		}
 		if resp.StatusCode() < 200 || resp.StatusCode() >= 400 {
 			http.Error(w, resp.Status(), resp.StatusCode())
+			log.Printf("[Error] Failed to download %v link: %v", urlStr, resp.Status())
 			return
 		}
 		responseHeaders = resp.Header()
@@ -1202,7 +1205,7 @@ func handleGetMethod(w http.ResponseWriter, req *http.Request) {
 				fileName = urlStr[lastSlashIndex+1 : queryIndex]
 			}
 		}
-
+		log.Printf("[Debug] fileName: %v", fileName)
 		contentType := responseHeaders.(http.Header).Get("Content-Type")
 		if contentType == "" || contentType == "application/octet-stream" {
 			if strings.HasSuffix(fileName, ".webm") {
