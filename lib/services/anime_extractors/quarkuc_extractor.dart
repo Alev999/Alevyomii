@@ -43,7 +43,6 @@ class QuarkUcExtractor {
     if (this.cookie.isEmpty) {
       this.cookie = cookie;
     }
-    MTorrentServer().ensureRunning();
   }
 
   Map<String, String> getHeaders() {
