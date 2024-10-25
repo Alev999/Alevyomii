@@ -81,6 +81,7 @@ struct Start_return {
 	char* r1;
 };
 extern struct Start_return Start(char* mcfg);
+extern void Stop();
 
 #ifdef __cplusplus
 }
