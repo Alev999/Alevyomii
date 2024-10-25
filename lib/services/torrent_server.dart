@@ -85,6 +85,29 @@ class MTorrentServer {
     }
   }
 
+  Future<void> stopMServer() async {
+    if (!_isRunning) return;
+    if (_isRunning) {
+      try {
+        if (Platform.isAndroid || Platform.isIOS) {
+          const channel =
+              MethodChannel('com.kodjodevf.mangayomi.libmtorrentserver');
+          await channel.invokeMethod('stop');
+        } else {
+          await Isolate.run(() {
+            libmtorrentserver_ffi.stop();
+          });
+        }
+      } catch (e) {
+        // 处理停止服务器时可能出现的错误
+        print("Error stopping server: $e");
+      } finally {
+        _isRunning = false;
+        _serverPort = null;
+      }
+    }
+  }
+
   Future<void> ensureRunning() async {
     if (!await check()) {
       await startMServer();

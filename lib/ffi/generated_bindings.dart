@@ -876,6 +876,14 @@ class TorrentLibrary {
           'Start');
   late final _Start =
       _StartPtr.asFunction<Start_return Function(ffi.Pointer<ffi.Char>)>();
+
+  void Stop() {
+    return _Stop();
+  }
+
+  late final _StopPtr =
+      _lookup<ffi.NativeFunction<ffi.Void Function()>>('Stop');
+  late final _Stop = _StopPtr.asFunction<void Function()>();
 }
 
 typedef va_list = ffi.Pointer<ffi.Char>;

@@ -17,4 +17,9 @@ func Start(mcfg *C.char) (int, *C.char) {
 	return port, nil
 }
 
+//export Stop
+func Stop() {
+	server.Stop()
+}
+
 func main() {}

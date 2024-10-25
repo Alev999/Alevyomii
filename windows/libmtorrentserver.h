@@ -81,6 +81,7 @@ struct Start_return {
 	char* r1;
 };
 extern __declspec(dllexport) struct Start_return Start(char* mcfg);
+extern __declspec(dllexport) void Stop();
 
 #ifdef __cplusplus
 }
