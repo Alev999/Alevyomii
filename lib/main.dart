@@ -22,6 +22,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:mangayomi/src/rust/frb_generated.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:mangayomi/services/torrent_server.dart';
 
 late Isar isar;
 
@@ -55,13 +56,31 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     iniDateFormatting();
     super.initState();
+    MTorrentServer().ensureRunning();
   }
-  
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.resumed) {
+      MTorrentServer().ensureRunning();
+    } else if (state == AppLifecycleState.paused) {
+      MTorrentServer().stopMServer();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    MTorrentServer().stopMServer();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final syncOnAppLaunch = ref.watch(syncOnAppLaunchStateProvider);

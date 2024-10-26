@@ -74,14 +74,14 @@ func Start(config *Config) (int, error) {
 	dnsResolve()
 
 	signal.Ignore(syscall.SIGPIPE)
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigs
-		log.Println("[INFO] Termination detected.")
-		Stop()
-		os.Exit(0)
-	}()
+	// sigs := make(chan os.Signal, 1)
+	// signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	// go func() {
+	// 	<-sigs
+	// 	log.Println("[INFO] Termination detected.")
+	// 	Stop()
+	// 	os.Exit(0)
+	// }()
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/torrent/addmagnet", addMagnet)
