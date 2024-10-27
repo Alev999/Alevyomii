@@ -75,13 +75,6 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   }
 
   @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    MTorrentServer().stopMServer();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final syncOnAppLaunch = ref.watch(syncOnAppLaunchStateProvider);
     if (syncOnAppLaunch) {
