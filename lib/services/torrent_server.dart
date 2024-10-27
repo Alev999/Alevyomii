@@ -10,11 +10,14 @@ import 'package:mangayomi/providers/storage_provider.dart';
 import 'package:mangayomi/services/http/m_client.dart';
 import 'package:mangayomi/utils/extensions/string_extensions.dart';
 import 'package:mangayomi/ffi/torrent_server_ffi.dart' as libmtorrentserver_ffi;
+import 'dart:async';
+import 'package:synchronized/synchronized.dart';
 
 class MTorrentServer {
   static final MTorrentServer _instance = MTorrentServer._internal();
   factory MTorrentServer() => _instance;
   MTorrentServer._internal();
+  final _lock = Lock();
 
   bool _isRunning = false;
   int? _serverPort;
@@ -37,7 +40,9 @@ class MTorrentServer {
   Future<bool> check() async {
     if (!_isRunning || _serverPort == null) return false;
     try {
-      final res = await http.get(Uri.parse("http://127.0.0.1:$_serverPort"));
+      final res = await http
+          .get(Uri.parse("http://127.0.0.1:$_serverPort"))
+          .timeout(const Duration(seconds: 5));
       // 考虑任何响应（包括 400）都表示服务器在运行
       return res.statusCode < 500;
     } catch (_) {
@@ -88,9 +93,20 @@ class MTorrentServer {
   }
 
   Future<void> ensureRunning() async {
-    if (!await check()) {
-      await startMServer();
-    }
+    await _lock.synchronized(() async {
+      int retries = 3;
+      while (retries > 0) {
+        if (await check()) {
+          print("Torrent server is running");
+          return;
+        }
+        print("Torrent server not running, attempting to start...");
+        await startMServer();
+        await Future.delayed(const Duration(seconds: 2)); // 等待服务器启动
+        retries--;
+      }
+      throw Exception("Failed to start torrent server after multiple attempts");
+    });
   }
 
   Future<(List<Video>, String?)> getTorrentPlaylist(

@@ -22,6 +22,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:mangayomi/src/rust/frb_generated.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
+import 'package:mangayomi/services/torrent_server.dart';
 
 late Isar isar;
 
@@ -55,11 +56,29 @@ class MyApp extends ConsumerStatefulWidget {
   ConsumerState<MyApp> createState() => _MyAppState();
 }
 
-class _MyAppState extends ConsumerState<MyApp> {
+class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     iniDateFormatting();
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    MTorrentServer().ensureRunning();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      MTorrentServer().ensureRunning().catchError((error) {
+        print("Error ensuring torrent server is running: $error");
+        // 在这里处理错误，可能需要向用户显示一个错误消息
+      });
+    }
   }
 
   @override
