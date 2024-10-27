@@ -23,6 +23,8 @@ import Libmtorrentserver
                       }else{
                           result(FlutterError(code: "ERROR", message: error.debugDescription, details: nil))
                       }
+                  case "stop":
+                      LibmtorrentserverStop()
                   default:
                       result(FlutterMethodNotImplemented)
                   }

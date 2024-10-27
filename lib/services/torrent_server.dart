@@ -92,6 +92,35 @@ class MTorrentServer {
     }
   }
 
+  Future<void> stopMServer() async {
+    if (!_isRunning) return;
+
+    try {
+      if (Platform.isAndroid || Platform.isIOS) {
+        const channel =
+            MethodChannel('com.kodjodevf.mangayomi.libmtorrentserver');
+        await channel.invokeMethod('stop');
+      } else {
+        await Isolate.run(() async {
+          await libmtorrentserver_ffi.stop();
+        });
+      }
+
+      // 重置服务器状态
+      _isRunning = false;
+      _serverPort = null;
+      _setBtServerPort(0); // 重置端口设置
+
+      print('Torrent server stopped successfully');
+    } catch (e) {
+      print('Error stopping torrent server: $e');
+      // 即使发生错误,也将服务器标记为已停止
+      _isRunning = false;
+      _serverPort = null;
+      _setBtServerPort(0);
+    }
+  }
+
   Future<void> ensureRunning() async {
     await _lock.synchronized(() async {
       int retries = 3;

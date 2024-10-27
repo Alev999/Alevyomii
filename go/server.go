@@ -39,6 +39,7 @@ import (
 
 var torrentCli *torrent.Client
 var torrentcliCfg *torrent.ClientConfig
+var httpServer *http.Server
 
 func Start(config *Config) (int, error) {
 
@@ -77,14 +78,9 @@ func Start(config *Config) (int, error) {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
-		log.Println("[INFO] Termination detected. Removing torrents")
-		for _, t := range torrentCli.Torrents() {
-			log.Printf("[INFO] Removing torrent: [%s]\n", t.Name())
-			t.Drop()
-			rmaErr := os.RemoveAll(filepath.Join(torrentcliCfg.DataDir, t.Name()))
-			if rmaErr != nil {
-				log.Printf("[ERROR] Failed to remove files of torrent: [%s]: %s\n", t.Name(), rmaErr)
-			}
+		log.Println("[INFO] 检测到终止信号")
+		if err := Stop(); err != nil {
+			log.Printf("[ERROR] 停止服务时出错: %v", err)
 		}
 		os.Exit(0)
 	}()
@@ -112,9 +108,13 @@ func Start(config *Config) (int, error) {
 	addr := listener.Addr().(*net.TCPAddr)
 
 	log.Printf("[INFO] Listening on %s\n", addr.AddrPort())
-
+	// 创建 HTTP 服务器
+	httpServer = &http.Server{
+		Addr:    config.Address,
+		Handler: c.Handler(mux),
+	}
 	go func() {
-		if err := http.Serve(listener, c.Handler(mux)); err != nil && err != http.ErrServerClosed {
+		if err := httpServer.Serve(listener); err != nil && err != http.ErrServerClosed {
 			log.Printf("[ERROR] HTTP 服务器错误: %v", err)
 			if err := listener.Close(); err != nil {
 				log.Printf("[ERROR] 关闭监听器时出错: %v", err)
@@ -123,6 +123,64 @@ func Start(config *Config) (int, error) {
 	}()
 
 	return addr.Port, nil
+}
+
+func Stop() error {
+	log.Println("[INFO] 正在停止服务...")
+
+	// 1. 停止 HTTP 服务器
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := httpServer.Shutdown(ctx); err != nil {
+		log.Printf("[ERROR] HTTP 服务器关闭出错: %v", err)
+	}
+
+	// 2. 关闭所有活跃的 torrent
+	for _, t := range torrentCli.Torrents() {
+		log.Printf("[INFO] 正在移除 torrent: [%s]", t.Name())
+		t.Drop()
+	}
+
+	// 3. 清理下载目录
+	if err := os.RemoveAll(torrentcliCfg.DataDir); err != nil {
+		log.Printf("[ERROR] 清理下载目录失败: %v", err)
+	}
+
+	// 4. 释放其他资源
+	if torrentCli != nil {
+		torrentCli.Close()
+		torrentCli = nil
+	}
+
+	// 5. 释放 InitClient 中初始化的资源
+	if NoRedirectClient != nil {
+		NoRedirectClient.GetClient().CloseIdleConnections()
+		NoRedirectClient = nil
+	}
+	if NoRedirectClientWithProxy != nil {
+		NoRedirectClientWithProxy.GetClient().CloseIdleConnections()
+		NoRedirectClientWithProxy = nil
+	}
+	if RestyClient != nil {
+		RestyClient.GetClient().CloseIdleConnections()
+		RestyClient = nil
+	}
+	if RestyClientWithProxy != nil {
+		RestyClientWithProxy.GetClient().CloseIdleConnections()
+		RestyClientWithProxy = nil
+	}
+
+	// 清理缓存
+	if mediaCache != nil {
+		mediaCache.Flush()
+		mediaCache = nil
+	}
+
+	// 清理全局变量
+	torrentcliCfg = nil
+
+	log.Println("[INFO] 服务已停止")
+	return nil
 }
 
 func handleProxy(w http.ResponseWriter, r *http.Request) {

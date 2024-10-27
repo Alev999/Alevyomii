@@ -67,6 +67,9 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    MTorrentServer().stopMServer().catchError((error) {
+      print("Error stopping torrent server: $error");
+    });
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -77,6 +80,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       MTorrentServer().ensureRunning().catchError((error) {
         print("Error ensuring torrent server is running: $error");
         // 在这里处理错误，可能需要向用户显示一个错误消息
+      });
+    } else if (state == AppLifecycleState.paused) {
+      MTorrentServer().stopMServer().catchError((error) {
+        print("Error stopping torrent server: $error");
       });
     }
   }
