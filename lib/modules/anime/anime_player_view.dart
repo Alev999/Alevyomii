@@ -45,7 +45,6 @@ class _AnimePlayerViewState extends riv.ConsumerState<AnimePlayerView> {
     if (_infoHash != null) {
       MTorrentServer().removeTorrent(_infoHash);
     }
-    MTorrentServer().stopMServer();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
         overlays: SystemUiOverlay.values);
     super.dispose();

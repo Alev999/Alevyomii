@@ -39,7 +39,6 @@ import (
 
 var torrentCli *torrent.Client
 var torrentcliCfg *torrent.ClientConfig
-var httpServer *http.Server
 
 func Start(config *Config) (int, error) {
 
@@ -78,8 +77,15 @@ func Start(config *Config) (int, error) {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
-		log.Println("[INFO] Termination detected.")
-		Stop()
+		log.Println("[INFO] Termination detected. Removing torrents")
+		for _, t := range torrentCli.Torrents() {
+			log.Printf("[INFO] Removing torrent: [%s]\n", t.Name())
+			t.Drop()
+			rmaErr := os.RemoveAll(filepath.Join(torrentcliCfg.DataDir, t.Name()))
+			if rmaErr != nil {
+				log.Printf("[ERROR] Failed to remove files of torrent: [%s]: %s\n", t.Name(), rmaErr)
+			}
+		}
 		os.Exit(0)
 	}()
 
@@ -107,68 +113,16 @@ func Start(config *Config) (int, error) {
 
 	log.Printf("[INFO] Listening on %s\n", addr.AddrPort())
 
-	httpServer = &http.Server{Addr: config.Address, Handler: c.Handler(mux)}
 	go func() {
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := http.Serve(listener, c.Handler(mux)); err != nil && err != http.ErrServerClosed {
 			log.Printf("[ERROR] HTTP 服务器错误: %v", err)
+			if err := listener.Close(); err != nil {
+				log.Printf("[ERROR] 关闭监听器时出错: %v", err)
+			}
 		}
 	}()
 
 	return addr.Port, nil
-}
-
-func Stop() {
-	log.Println("[INFO] Stopping MediaServer")
-
-	// 关闭 torrent 客户端
-	if torrentCli != nil {
-		log.Println("[INFO] Closing torrent client")
-		torrentCli.Close()
-	}
-
-	// 移除所有种子和文件
-	for _, t := range torrentCli.Torrents() {
-		log.Printf("[INFO] Removing torrent: [%s]\n", t.Name())
-		t.Drop()
-		rmaErr := os.RemoveAll(filepath.Join(torrentcliCfg.DataDir, t.Name()))
-		if rmaErr != nil {
-			log.Printf("[ERROR] Failed to remove files of torrent: [%s]: %s\n", t.Name(), rmaErr)
-		}
-	}
-
-	// 关闭 HTTP 服务器
-	if httpServer != nil {
-		log.Println("[INFO] Shutting down HTTP server")
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := httpServer.Shutdown(ctx); err != nil {
-			log.Printf("[ERROR] HTTP server Shutdown: %v", err)
-		}
-	}
-
-	// 关闭 InitClient 中初始化的资源
-	log.Println("[INFO] Closing HTTP clients")
-	if NoRedirectClient != nil {
-		NoRedirectClient.GetClient().CloseIdleConnections()
-	}
-	if NoRedirectClientWithProxy != nil {
-		NoRedirectClientWithProxy.GetClient().CloseIdleConnections()
-	}
-	if RestyClient != nil {
-		RestyClient.GetClient().CloseIdleConnections()
-	}
-	if RestyClientWithProxy != nil {
-		RestyClientWithProxy.GetClient().CloseIdleConnections()
-	}
-	if HttpClient != nil {
-		HttpClient.CloseIdleConnections()
-	}
-
-	// 清理缓存
-	log.Println("[INFO] Clearing media cache")
-	mediaCache.Flush()
-
-	log.Println("[INFO] MediaServer stopped")
 }
 
 func handleProxy(w http.ResponseWriter, r *http.Request) {
