@@ -38,8 +38,10 @@ class MTorrentServer {
     if (!_isRunning || _serverPort == null) return false;
     try {
       final res = await http.get(Uri.parse("http://127.0.0.1:$_serverPort"));
-      return res.statusCode == 200;
+      // 考虑任何响应（包括 400）都表示服务器在运行
+      return res.statusCode < 500;
     } catch (_) {
+      // 发生异常（如连接被拒绝）时认为服务器未运行
       return false;
     }
   }
