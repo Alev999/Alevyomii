@@ -24,7 +24,12 @@ import Libmtorrentserver
                           result(FlutterError(code: "ERROR", message: error.debugDescription, details: nil))
                       }
                   case "stop":
-                      LibmtorrentserverStop()
+                      var error: NSError?
+                      if LibmtorrentserverStop(&error) {
+                          result(nil)  // 停止成功，返回 nil 表示成功
+                      } else {
+                          result(FlutterError(code: "ERROR", message: error.debugDescription, details: nil))
+                      }
                   default:
                       result(FlutterMethodNotImplemented)
                   }
