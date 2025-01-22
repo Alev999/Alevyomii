@@ -226,6 +226,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         },
                         child: NavigationBarTheme(
                           data: NavigationBarThemeData(
+                            labelTextStyle: WidgetStatePropertyAll(
+                                TextStyle(overflow: TextOverflow.ellipsis)),
                             indicatorShape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30)),
                           ),
