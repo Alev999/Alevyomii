@@ -51,12 +51,15 @@ jobs:
 
       - name: flutter pub get
         run: flutter pub get
-
+      
       - name: Update anime sources URL
         run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/anime_index.json|https://yxxyun.github.io/mangayomi-extensions/anime_index.json|g' lib/services/fetch_anime_sources.dart
 
       - name: Update manga sources URL
         run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/index.json|https://yxxyun.github.io/mangayomi-extensions/index.json|g' lib/services/fetch_manga_sources.dart
+
+      - name: Update novel sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/novel_index.json|https://yxxyun.github.io/mangayomi-extensions/novel_index.json|g' lib/services/fetch_novel_sources.dart
 
       - name: build android apks
         run: |
@@ -91,9 +94,6 @@ jobs:
         with:
           channel: 'stable'
       
-      # - name: setup xcode
-      #   run: sudo xcode-select --switch /Applications/Xcode_14.3.1.app
-      
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
@@ -109,6 +109,9 @@ jobs:
 
       - name: Update manga sources URL
         run: sed -i '' 's|https://kodjodevf.github.io/mangayomi-extensions/index.json|https://yxxyun.github.io/mangayomi-extensions/index.json|g' lib/services/fetch_manga_sources.dart
+
+      - name: Update novel sources URL
+        run: sed -i '' 's|https://kodjodevf.github.io/mangayomi-extensions/novel_index.json|https://yxxyun.github.io/mangayomi-extensions/novel_index.json|g' lib/services/fetch_novel_sources.dart
 
       - name: build ios
         run: |
@@ -161,6 +164,9 @@ jobs:
       - name: Update manga sources URL
         run: sed -i '' 's|https://kodjodevf.github.io/mangayomi-extensions/index.json|https://yxxyun.github.io/mangayomi-extensions/index.json|g' lib/services/fetch_manga_sources.dart
 
+      - name: Update novel sources URL
+        run: sed -i '' 's|https://kodjodevf.github.io/mangayomi-extensions/novel_index.json|https://yxxyun.github.io/mangayomi-extensions/novel_index.json|g' lib/services/fetch_novel_sources.dart
+
       - name: build macos
         run: |
           cd macos
@@ -205,6 +211,21 @@ jobs:
 
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Update anime sources URL
+        shell: pwsh
+        run: |
+          (Get-Content lib/services/fetch_anime_sources.dart) -replace 'https://kodjodevf.github.io/mangayomi-extensions/anime_index.json', 'https://yxxyun.github.io/mangayomi-extensions/anime_index.json' | Set-Content lib/services/fetch_anime_sources.dart
+
+      - name: Update manga sources URL
+        shell: pwsh
+        run: |
+          (Get-Content lib/services/fetch_manga_sources.dart) -replace 'https://kodjodevf.github.io/mangayomi-extensions/index.json', 'https://yxxyun.github.io/mangayomi-extensions/index.json' | Set-Content lib/services/fetch_manga_sources.dart
+      
+      - name: Update novel sources URL
+        shell: pwsh
+        run: |
+          (Get-Content lib/services/fetch_novel_sources.dart) -replace 'https://kodjodevf.github.io/mangayomi-extensions/novel_index.json', 'https://yxxyun.github.io/mangayomi-extensions/novel_index.json' | Set-Content lib/services/fetch_novel_sources.dart
 
       - name: Enable dart_distributor
         run: dart pub global activate flutter_distributor
@@ -255,6 +276,15 @@ jobs:
       - name: flutter pub get
         run: flutter pub get
 
+      - name: Update anime sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/anime_index.json|https://yxxyun.github.io/mangayomi-extensions/anime_index.json|g' lib/services/fetch_anime_sources.dart
+
+      - name: Update manga sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/index.json|https://yxxyun.github.io/mangayomi-extensions/index.json|g' lib/services/fetch_manga_sources.dart
+
+      - name: Update novel sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/novel_index.json|https://yxxyun.github.io/mangayomi-extensions/novel_index.json|g' lib/services/fetch_novel_sources.dart
+
       - name: build linux
         run: flutter build linux
       - name: Zip 
@@ -300,6 +330,15 @@ jobs:
         
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Update anime sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/anime_index.json|https://yxxyun.github.io/mangayomi-extensions/anime_index.json|g' lib/services/fetch_anime_sources.dart
+
+      - name: Update manga sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/index.json|https://yxxyun.github.io/mangayomi-extensions/index.json|g' lib/services/fetch_manga_sources.dart
+
+      - name: Update novel sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/novel_index.json|https://yxxyun.github.io/mangayomi-extensions/novel_index.json|g' lib/services/fetch_novel_sources.dart
 
       - name: Enable dart_distributor
         run: dart pub global activate flutter_distributor
@@ -350,9 +389,18 @@ jobs:
 
       - name: Install the CLI tool
         run: cargo install 'flutter_rust_bridge_codegen'
-
+        
       - name: flutter pub get
         run: flutter pub get
+
+      - name: Update anime sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/anime_index.json|https://yxxyun.github.io/mangayomi-extensions/anime_index.json|g' lib/services/fetch_anime_sources.dart
+
+      - name: Update manga sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/index.json|https://yxxyun.github.io/mangayomi-extensions/index.json|g' lib/services/fetch_manga_sources.dart
+
+      - name: Update novel sources URL
+        run: sed -i 's|https://kodjodevf.github.io/mangayomi-extensions/novel_index.json|https://yxxyun.github.io/mangayomi-extensions/novel_index.json|g' lib/services/fetch_novel_sources.dart
 
       - name: Enable dart_distributor
         run: dart pub global activate flutter_distributor
