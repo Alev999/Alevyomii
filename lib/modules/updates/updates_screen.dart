@@ -43,7 +43,13 @@ class _UpdatesScreenState extends ConsumerState<UpdatesScreen>
         .idIsNotNull()
         .favoriteEqualTo(true)
         .and()
-        .itemTypeEqualTo(widget.itemType)
+        .itemTypeEqualTo(_tabBarController.index == 0
+            ? ItemType.manga
+            : _tabBarController.index == 1
+                ? ItemType.anime
+                : ItemType.novel)
+        .and()
+        .isLocalArchiveEqualTo(false)
         .findAllSync();
     int numbers = 0;
 
@@ -187,6 +193,39 @@ class _UpdatesScreenState extends ConsumerState<UpdatesScreen>
                 icon: Icon(Icons.delete_sweep_outlined,
                     color: Theme.of(context).hintColor)),
           ],
+          bottom: TabBar(
+            indicatorSize: TabBarIndicatorSize.tab,
+            controller: _tabBarController,
+            tabs: [
+              if (!hideManga)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Tab(text: l10n.manga),
+                    const SizedBox(width: 8),
+                    _updateNumbers(ref, ItemType.manga)
+                  ],
+                ),
+              if (!hideAnime)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Tab(text: l10n.anime),
+                    const SizedBox(width: 8),
+                    _updateNumbers(ref, ItemType.anime)
+                  ],
+                ),
+              if (!hideNovel)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Tab(text: l10n.novel),
+                    const SizedBox(width: 8),
+                    _updateNumbers(ref, ItemType.novel)
+                  ],
+                ),
+            ],
+          ),
         ),
         body: Padding(
           padding: const EdgeInsets.only(top: 10),
@@ -312,4 +351,29 @@ class _UpdateTabState extends ConsumerState<UpdateTab> {
       ],
     ));
   }
+}
+
+Widget _updateNumbers(WidgetRef ref, ItemType itemType) {
+  return StreamBuilder(
+      stream: isar.updates
+          .filter()
+          .idIsNotNull()
+          .and()
+          .chapter((q) => q.manga((q) => q.itemTypeEqualTo(itemType)))
+          .watch(fireImmediately: true),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          final entries = snapshot.data!.toList();
+          return entries.isEmpty
+              ? SizedBox.shrink()
+              : Badge(
+                  backgroundColor: Theme.of(context).focusColor,
+                  label: Text(
+                    entries.length.toString(),
+                    style: TextStyle(
+                        color: Theme.of(context).textTheme.bodySmall!.color),
+                  ));
+        }
+        return Container();
+      });
 }
