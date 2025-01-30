@@ -20,6 +20,7 @@ import 'package:mangayomi/modules/more/settings/appearance/providers/blend_level
 import 'package:mangayomi/modules/more/settings/appearance/providers/flex_scheme_color_state_provider.dart';
 import 'package:mangayomi/modules/more/settings/appearance/providers/pure_black_dark_mode_state_provider.dart';
 import 'package:mangayomi/modules/more/settings/appearance/providers/theme_mode_state_provider.dart';
+import 'package:mangayomi/modules/more/settings/reader/providers/reader_state_provider.dart';
 import 'package:mangayomi/providers/l10n_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -64,7 +65,8 @@ void restoreBackup(Ref ref, Map<String, dynamic> backup) {
           ?.map((e) => Chapter.fromJson(e))
           .toList();
       final categories = (backup["categories"] as List?)
-          ?.map((e) => Category.fromJson(e))
+          ?.map((e) =>
+              Category.fromJson(e)..forItemType = _convertToItemTypeCategory(e))
           .toList();
       final track = (backup["tracks"] as List?)
           ?.map((e) => Track.fromJson(e)..itemType = _convertToItemType(e))
@@ -178,6 +180,8 @@ void restoreBackup(Ref ref, Map<String, dynamic> backup) {
         ref.invalidate(flexSchemeColorStateProvider);
         ref.invalidate(pureBlackDarkModeStateProvider);
         ref.invalidate(l10nLocaleStateProvider);
+        ref.invalidate(navigationOrderStateProvider);
+        ref.invalidate(hideItemsStateProvider);
       });
     } catch (e) {
       rethrow;
@@ -192,6 +196,15 @@ ItemType _convertToItemType(Map<String, dynamic> backup) {
   return isManga == null
       ? ItemType.values[backup['itemType'] ?? 0]
       : isManga
+          ? ItemType.manga
+          : ItemType.anime;
+}
+
+ItemType _convertToItemTypeCategory(Map<String, dynamic> backup) {
+  final forManga = backup['forManga'];
+  return forManga == null
+      ? ItemType.values[backup['itemType'] ?? 0]
+      : forManga
           ? ItemType.manga
           : ItemType.anime;
 }
